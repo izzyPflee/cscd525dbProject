@@ -16,12 +16,11 @@ public class CrimeQuery
 {
 	private ExecutionEngine QUERY = null;
 	private GraphDatabaseService DB = null;
-	public CrimeQuery(NeoDB db)
+	public CrimeQuery(GraphDatabaseService DB)
 	{
-		if(db != null)
+		if(DB != null)
 		{
-			QUERY = new ExecutionEngine(db.getDB());
-			DB = db.getDB();
+			QUERY = new ExecutionEngine(DB);
 		}
 		else
 			throw new RuntimeException("Error!");
