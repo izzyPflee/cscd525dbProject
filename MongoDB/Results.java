@@ -3,7 +3,9 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
 
-/*Methods for comparing query results on matching content and/or order of content*/
+/*Print your query results (just the case number) to a text file*/
+/*Use Results.match(file1, file2) to compare out-of-order results*/
+/*Use Results.inOrder(file1, file2) to compare sorted results*/
 
 public class Results {
 	private static HashMap<String, ?> map;
