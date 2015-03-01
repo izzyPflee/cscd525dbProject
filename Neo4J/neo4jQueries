@@ -1,0 +1,16 @@
+*Query One: select all case_numbers in PM (12PM-11:59PM)*/
+//Because we only have one node with the Label PM, this should be good.
+
+
+MATCH (n)-[:TIME_WHEN]->(m) WHERE m.AMPM="PM" RETURN DISTINCT n
+
+/*Query Two: select all case_numbers where primary_type = "THEFT" and location_description = "APARTMENT"*/
+
+MATCH (c:CRIME)-[:COMMITTED]->(n:CASE)<-[:LOCATION_WHERE]-(l:LOCATION_DESCRIPTION) WHERE c.CRIME="THEFT" AND l.LOCATION_DESCRIPTION="APARTMENT" RETURN DISTINCT n
+
+/*Query Three: count the number of primary_type = "MURDER"*/
+//We use HOMICIDE instead of murder, b/c murder is in the description and
+homicide is the primary type in the CSV
+
+MATCH (c:CRIME)-[:COMMITTED]->(n:CASE) WHERE c.CRIME="HOMICIDE" return COUNT(DISTINCT(n))
+
