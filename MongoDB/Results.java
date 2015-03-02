@@ -3,12 +3,12 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
 
-/*Print your query results (just the case number) to a text file*/
-/*Use Results.match(file1, file2) to compare out-of-order results*/
-/*Use Results.inOrder(file1, file2) to compare sorted results*/
+/*Step 1: Print your query results (just the case number) to a text file*/
+/*Step 2.1: Use Results.match(file1, file2) to compare unorder results. Assumption is no query returns duplicate records*/
+/*Step 2.2: Use Results.inOrder(file1, file2) to compare sorted results*/
 
 public class Results {
-	private static HashMap<String, ?> map;
+	private static HashMap<String, Boolean> map;
 	
 	private Results() {} //public xtor unnecessary
 	
@@ -22,11 +22,11 @@ public class Results {
 	}
 	
 	private static void buildMap(String file) {
-		map = new HashMap();
+		map = new HashMap<String, Boolean>();
 		Scanner sc = getScanner(file);
 		while (sc.hasNext()) {
 			String line = sc.nextLine();
-			map.put(line, null);
+			map.put(line, true);
 		}
 		sc.close();		
 	}
@@ -35,7 +35,10 @@ public class Results {
 		Scanner sc = getScanner(file);
 		while (sc.hasNext()) {
 			String line = sc.nextLine();
-			map.remove(line);
+			if (map.remove(line) == null) { //found extra record
+				map.put(line, true); 
+				break;
+			}
 		}
 		sc.close();
 	}
