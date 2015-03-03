@@ -58,7 +58,7 @@ public class NeoParser
 			Scanner sc = new Scanner(new File(fileName));
 		
 			//The indexes for removing redundant nodes
-			UniqueFactory.UniqueNodeFactory ampm= getIndex(DB, "AM/PM");
+			UniqueFactory.UniqueNodeFactory ampm= getIndex(DB, "AMPM");
 			UniqueFactory.UniqueNodeFactory months = getIndex(DB, "MONTH");
 			UniqueFactory.UniqueNodeFactory years = getIndex(DB, "YEAR");
 			UniqueFactory.UniqueNodeFactory beats = getIndex(DB, "BEAT");
@@ -171,7 +171,7 @@ public class NeoParser
 		Relationship rel1, rel2;
 		int hour = Integer.parseInt(vals[2].split(":")[0]);
 		int minute = Integer.parseInt(vals[2].split(":")[1]);
-		Node time = ampm.getOrCreate("AM/PM", vals[3]);
+		Node time = ampm.getOrCreate("AMPM", vals[3]);
 		rel1 = CASE.createRelationshipTo(time, RelTypes.TIME_WHEN);
 		rel2 = time.createRelationshipTo(CASE, RelTypes.TIME_WHEN);
 		rel1.setProperty("HOUR", hour);
