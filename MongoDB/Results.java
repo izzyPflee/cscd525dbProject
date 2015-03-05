@@ -3,9 +3,7 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
 
-/*Step 1: Print your query results (just the case number) to a text file*/
-/*Step 2.1: Use Results.match(file1, file2) to compare unorder results. Assumption is no query returns duplicate records*/
-/*Step 2.2: Use Results.inOrder(file1, file2) to compare sorted results*/
+/*Takes two text file arguments and compares their contents*/
 
 public class Results {
 	private static HashMap<String, Boolean> map;
@@ -26,6 +24,10 @@ public class Results {
 		Scanner sc = getScanner(file);
 		while (sc.hasNext()) {
 			String line = sc.nextLine();
+			if (map.containsKey(line)) {
+				System.out.println(file + " contains duplicates!");
+				System.exit(0);
+			}
 			map.put(line, true);
 		}
 		sc.close();		
@@ -63,18 +65,36 @@ public class Results {
 				String line2 = sc2.nextLine();
 				if (!line1.equals(line2)) 
 					inOrder = false;    //records out of order
-			} else  inOrder = false;            //file1 has more lines than file2
+			} else  inOrder = false; 	//file1 has more lines than file2
 		}
 		if (sc2.hasNext() && inOrder)     
-			inOrder = false;                    //file2 has more lines than file1	
+			inOrder = false;            //file2 has more lines than file1	
 		sc1.close(); sc2.close();
 		return inOrder;							            
 	}
 	
-	/*testing*/
-	public static void main(String[] args) {
-		//match(args[0], args[1]);
+	public static boolean hasDuplicates(String file) {
+		map = new HashMap<String, Boolean>();
+		Scanner sc = getScanner(file);
+		while (sc.hasNext()) {
+			String line = sc.nextLine();
+			if (map.containsKey(line)) {
+				return true;
+			}
+			map.put(line, true);
+		}
+		sc.close();
+		return false;
 	}
 	
-
+	/*testing*/
+	public static void main(String[] args) {
+//		System.out.println("query 1 match: " + match("query1Parsed.txt", "query1NeoParsed.txt"));
+//		System.out.println("query 2 match : " + match("query2Parsed.txt", "query2NeoParsed.txt"));
+//		System.out.println("query1NeoParsed.txt duplicate free? " + !hasDuplicates("query1NeoParsed.txt"));
+//		System.out.println("query2NeoParsed.txt duplicate free? " + !hasDuplicates("query2NeoParsed.txt"));
+//		System.out.println("query1Parsed.txt duplicate free? " + !hasDuplicates("query1Parsed.txt"));
+//		System.out.println("query2Parsed.txt duplicate free? " + !hasDuplicates("query2Parsed.txt"));
+			
+	}	
 }
