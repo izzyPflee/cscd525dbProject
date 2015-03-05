@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -26,6 +27,11 @@ public class NeoParser
 	private final static SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy H:m:s a");
 	private final int COLS= 15;
 	
+	private HashMap<String, ?> map = new HashMap(); //for duplicate case_number matching
+
+	
+	
+	
     private enum RelTypes implements RelationshipType
     {
         ARRESTED, COMMITTED, YEAR_WHEN, MONTH_WHEN, 
@@ -37,6 +43,12 @@ public class NeoParser
 	{
 		buildDB(fileName, DB);
 	}
+	
+
+private boolean isDuplicate(String case_number) {
+	if (map.containsKey(case_number)) return true;
+	map.put(case_number, null); return false;
+}
 	
 	/**
 	 * @param filename
@@ -80,31 +92,37 @@ public class NeoParser
 					String line = sc.nextLine();
 					String[] vals = COMMA_PATTERN.split(line);
 					
-					//Create criminal case node
-					Label case_label =  DynamicLabel.label("CASE");
-	    			Node CASE = DB.createNode(case_label);
-	    			CASE.setProperty("CASE_ID", vals[0]);//set case id 
 					
-	    			//Connect the Criminal CASE to all other nodes in graph
-	    			loadDomestic(DB, domestic, CASE, vals);
-	    			loadArrest(DB, arrest, CASE, vals);
-	    			loadAMPM(DB, ampm, CASE, vals);
-	    			loadMonth(DB, months, CASE, vals);
-	    			loadYear(DB, years, CASE, vals);
-					loadCrime(DB, crimes, CASE, vals);	
-					loadDistrict(DB,districts, CASE, vals);
-					loadBeat(DB, beats, CASE, vals);
-					loadCommunity(DB, communities, CASE, vals);
-					loadLocDescription(DB, loc_descriptions, CASE, vals);
 					
-					//Flush the heap of the transaction and start a new transaction
-					if(++heapCount % batchSize == 0)
-					{
-						tx.success();
-						tx.close();
-						tx = DB.beginTx();
-						System.out.println(heapCount + " flushed");
-					}
+	    			if (! isDuplicate(vals[0]))
+	    			{
+	    				//Create criminal case node
+						Label case_label =  DynamicLabel.label("CASE");
+		    			Node CASE = DB.createNode(case_label);
+		    			CASE.setProperty("CASE_ID", vals[0]);//set case id 
+	    				
+	    				
+		    			//Connect the Criminal CASE to all other nodes in graph
+		    			loadDomestic(DB, domestic, CASE, vals);
+		    			loadArrest(DB, arrest, CASE, vals);
+		    			loadAMPM(DB, ampm, CASE, vals);
+		    			loadMonth(DB, months, CASE, vals);
+		    			loadYear(DB, years, CASE, vals);
+						loadCrime(DB, crimes, CASE, vals);	
+						loadDistrict(DB,districts, CASE, vals);
+						loadBeat(DB, beats, CASE, vals);
+						loadCommunity(DB, communities, CASE, vals);
+						loadLocDescription(DB, loc_descriptions, CASE, vals);
+						
+						//Flush the heap of the transaction and start a new transaction
+						if(++heapCount % batchSize == 0)
+						{
+							tx.success();
+							tx.close();
+							tx = DB.beginTx();
+							System.out.println(heapCount + " flushed");
+						}
+	    			}
 				
 			}//end while
 			tx.success();
