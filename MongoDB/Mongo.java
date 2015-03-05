@@ -1,5 +1,8 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -10,6 +13,7 @@ import java.util.regex.Pattern;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
 import com.mongodb.DB;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -18,55 +22,55 @@ import com.mongodb.MongoClient;
 
 public class Mongo {
 	public DBCollection collection = null;
+	BulkWriteOperation builder = null;
 	private HashMap<String, ?> map = new HashMap(); //for duplicate case_number matching
 	private final static SimpleDateFormat DF = new SimpleDateFormat("MM/dd/yyyy H:m:s a");
 	private final static Pattern COMMA_PATTERN = Pattern.compile(",");
 	
 	public Mongo() {/*empty*/}
+	
 	public Mongo(String address, String database, String collection) {
 		connectMongo(address, database, collection);
 	} 
+	
+	/*builds new mongo collection from specified data file*/
+	public void insertAllData(String file) {
+		
+		/*remove any records in the collection*/
+		collection.drop(); 
+		
+		/*initialize builder for bulk writes*/
+		builder = collection.initializeOrderedBulkOperation();
+		
+		/*read and parse first line for keys*/
+		BufferedReader br = getBufferedReader(file);
+		String firstLine = readLine(br);
+		String[] keys = COMMA_PATTERN.split(firstLine);
 
-	public void connectMongo(String address, String database, String collection) {
-		try {
-			MongoClient client = new MongoClient(address);
-			DB db = client.getDB(database);
-			this.collection =  db.getCollection(collection);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}	
-	}
+		/*read additional lines, parse for values, build document, insert into database*/
+		String line;
+		for (int i = 0; (line = readLine(br)) != null; i++) {
+			String[] vals = COMMA_PATTERN.split(line);
+			DBObject doc = buildDoc(keys, vals);
+			
+			if (doc != null) 			//add documents to the batch
+				builder.insert(doc);
 	
-	private static Scanner getScanner(String fileName) {
-		try {
-			return new Scanner(new File(fileName));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			if (i == 999) { 			//bulk insert every 1000 documents
+				builder.execute();
+				builder = collection.initializeOrderedBulkOperation();
+				i = 0;
+			} 
 		}
-		return null;
+		
+		/*bulk insert remaining documents*/
+		builder.execute();
+		closeBufferedReader(br);
 	}
 	
-	private static Date buildDate(String date, String time, String amPM) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(date); sb.append(" "); 
-		sb.append(time); sb.append(" ");
-		sb.append(amPM); sb.append(" ");
-		try {
-			return DF.parse(sb.toString());
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		return new Date();
-	}
-	
-	private boolean isDuplicate(String case_number) {
-		if (map.containsKey(case_number)) return true;
-		map.put(case_number, null);       return false;
-	}
-	
-	/*insert one doc into the collection*/
-	private void insertData(String[] keys, String[] vals) {
-		if (isDuplicate(vals[0])) return; //no duplicate case_numbers allowed
+	/*build JSON document*/
+	private BasicDBObject buildDoc(String[] keys, String[] vals) {
+		if (isDuplicate(vals[0])) return null; //no duplicate case_numbers allowed
 		
 		/*mongo-generated _id*/
 		BasicDBObject doc = new BasicDBObject();
@@ -114,29 +118,63 @@ public class Mongo {
 		list.add(Double.parseDouble(vals[13]));
 		doc.put("location", list);
 
-		collection.insert(doc);	
+		return doc;	
 	}
-		
-	/*builds new mongo collection from specified data file*/
-	public void insertAllData(String file) {
-		
-		/*get mongoDB collection*/
-		collection.drop(); 
-		
-		/*scan & parse firstLine for key names*/
-		Scanner sc = getScanner(file);
-		String firstLine = sc.nextLine();
-		String[] keys = COMMA_PATTERN.split(firstLine);
-		
-		/*read and parse data, insert into collection*/
-		while (sc.hasNextLine()) {
-			String line = sc.nextLine();
-			String[] vals = COMMA_PATTERN.split(line);
-			insertData(keys, vals);
+	
+	public void connectMongo(String address, String database, String collection) {
+		try {
+			MongoClient client = new MongoClient(address);
+			DB db = client.getDB(database);
+			this.collection =  db.getCollection(collection);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	private static BufferedReader getBufferedReader(String file) {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(file));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return br;
+	}
+	
+	private static String readLine(BufferedReader br) {
+		try {
+			return br.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private static void closeBufferedReader(BufferedReader br) {
+		try {
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
-		sc.close();
-//		printCollection();
+	}
+	
+	private static Date buildDate(String date, String time, String amPM) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(date); sb.append(" "); 
+		sb.append(time); sb.append(" ");
+		sb.append(amPM); sb.append(" ");
+		try {
+			return DF.parse(sb.toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return new Date();
+	}
+	
+	private boolean isDuplicate(String case_number) {
+		if (map.containsKey(case_number)) return true;
+		map.put(case_number, null);       return false;
 	}
 	
 	public void printCollection() {
