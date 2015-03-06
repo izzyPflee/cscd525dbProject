@@ -15,4 +15,4 @@ homicide is the primary type in the CSV
 MATCH (c:CRIME)-[:COMMITTED]->(n:CASE) WHERE c.CRIME="HOMICIDE" return COUNT(DISTINCT(n))
 
 //Query for relationship between two random case nodes
-MATCH (n:CASE)-[r]-(m:CASE) WHERE n.CASE="--insert-case" AND m.CASE="--insert-case" RETURN r
+MATCH p=(n:CASE)-[r:TIME_WHEN*1..2]-(m:CASE) WHERE n.CASE_ID="-insert-" AND m.CASE_ID="-insert" RETURN relationships(p);
