@@ -1,24 +1,18 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.index.UniqueFactory;
-import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 
 /*Modified Matt's NeoParser to create indexes and single relationships between nodes*/
@@ -45,7 +39,7 @@ public class NeoParser  {
 	}
 	
 	/*ADDED: Creates indexes on CASE.number and amPM.amPM*/
-	private static void createIndexes() {
+	private static void createIndexes(GraphDatabaseService DB) {
 		try ( Transaction tx = DB.beginTx() ) {
 		    Schema schema = DB.schema();
 		    schema.indexFor( DynamicLabel.label( "CASE" ) ).on( "number" ).create();
@@ -71,7 +65,7 @@ public class NeoParser  {
 		int heapCount =0;
 
 		/*ADDED*/
-		createIndexes();
+		createIndexes(DB);
 		
 		try{
 			Scanner sc = new Scanner(new File(fileName));
@@ -89,8 +83,7 @@ public class NeoParser  {
 			UniqueFactory.UniqueNodeFactory arrest          = getFactory(DB, "arrest");
 			
 			//get keys from first line of data file
-			String firstLine = sc.nextLine();
-			String[] keys = COMMA_PATTERN.split(firstLine);
+			sc.nextLine();
 		
 			//initial transaction
 			Transaction tx = DB.beginTx();
